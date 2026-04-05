@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>KOZOPLAN — Savings Plan</title>
+    
+    <!-- Google Analytics (замени G-XXXXXXXXXX на свой ID) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f1f5f9;
+            padding: 20px;
+            color: #0f172a;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 32px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #0f172a;
+        }
+        .logo p {
+            font-size: 12px;
+            color: #64748b;
+            letter-spacing: 2px;
+        }
+        .badge {
+            background: #10b981;
+            color: white;
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 40px;
+            display: inline-block;
+        }
+        .stats {
+            background: #f1f5f9;
+            border-radius: 28px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .remaining {
+            font-size: 42px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .saved {
+            font-size: 18px;
+            color: #475569;
+            margin-top: 8px;
+        }
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 40px;
+            height: 12px;
+            margin: 16px 0;
+        }
+        .progress-fill {
+            background: #10b981;
+            width: 0%;
+            height: 100%;
+            border-radius: 40px;
+            transition: width 0.3s ease;
+        }
+        .setup-group {
+            margin-bottom: 20px;
+        }
+        .setup-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .setup-group input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 28px;
+            font-size: 16px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 40px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .day-list {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .day-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .day-info {
+            font-weight: 500;
+        }
+        .day-amount {
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .pay-btn {
+            background: #10b981;
+            padding: 6px 16px;
+            width: auto;
+            border-radius: 40px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            color: white;
+        }
+        .paid-btn {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+        .reset-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .reset-link a {
+            color: #94a3b8;
+            font-size: 14px;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+        .motivation-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .motivation-card {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            max-width: 500px;
+            text-align: center;
+        }
+        .motivation-card h2 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        .motivation-card p {
+            font-size: 16px;
+            color: #334155;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+        .motivation-btn {
+            background: #10b981;
+            width: auto;
+            padding: 12px 24px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="logo">
+            <h1>KOZOPLAN</h1>
+            <p><span class="badge">pay yourself first</span></p>
+        </div>
+
+        <div id="setupScreen">
+            <div class="setup-group">
+                <label>🎯 Goal amount ($)</label>
+                <input type="number" id="goalAmount" value="5000">
+            </div>
+            <div class="setup-group">
+                <label>📅 Number of days</label>
+                <input type="number" id="daysCount" value="30">
+            </div>
+            <button id="generateBtn">Create savings plan →</button>
+        </div>
+
+        <div id="trackerScreen" style="display: none;">
+            <div class="stats">
+                <div style="font-size: 14px;">💸 Remaining to save</div>
+                <div class="remaining" id="remainingAmount">$0</div>
+                <div class="saved" id="savedAmount">Saved: $0</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div id="dayList" class="day-list"></div>
+
+            <div class="reset-link">
+                <a href="#" id="resetLink">Start a new plan</a>
+            </div>
+        </div>
+    </div>
+    <footer>
+        Pay any day in any order. No daily limits.
+    </footer>
+</div>
+
+<script>
+    // ---------- Глобальные переменные ----------
+    let target = 5000;
+    let days = 30;
+    let amounts = [];
+    let paidStatus = [];
+    let savedSoFar = 0;
+
+    const setupScreen = document.getElementById('setupScreen');
+    const trackerScreen = document.getElementById('trackerScreen');
+    const generateBtn = document.getElementById('generateBtn');
+    const resetLink = document.getElementById('resetLink');
+    const remainingAmountSpan = document.getElementById('remainingAmount');
+    const savedAmountSpan = document.getElementById('savedAmount');
+    const progressFill = document.getElementById('progressFill');
+    const dayListDiv = document.getElementById('dayList');
+
+    function generateRandomAmounts(total, n) {
+        let avg = total / n;
+        let min = Math.max(10, Math.floor(avg * 0.6));
+        let max = Math.min(200, Math.ceil(avg * 1.4));
+        
+        if (max - min < 15) {
+            min = Math.max(5, min - 10);
+            max = Math.min(300, max + 10);
+        }
+        if (max < min + 5) {
+            max = min + 20;
+        }
+        
+        for (let attempt = 0; attempt < 200; attempt++) {
+            let result = [];
+            let sum = 0;
+            
+            for (let i = 0; i < n - 1; i++) {
+                let r = Math.random() * (max - min) + min;
+                let rounded = Math.round(r);
+                if (rounded < min) rounded = min;
+                if (rounded > max) rounded = max;
+                result.push(rounded);
+                sum += rounded;
+            }
+            
+            let last = total - sum;
+            if (last >= min && last <= max) {
+                result.push(Math.round(last));
+                for (let i = result.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [result[i], result[j]] = [result[j], result[i]];
+                }
+                return result;
+            }
+        }
+        
+        let result = [];
+        let sum = 0;
+        for (let i = 0; i < n - 1; i++) {
+            let r = avg * (0.85 + Math.random() * 0.3);
+            let rounded = Math.round(r);
+            result.push(rounded);
+            sum += rounded;
+        }
+        result.push(total - sum);
+        return result;
+    }
+
+    function updateUI() {
+        let remaining = target - savedSoFar;
+        if (remaining < 0) remaining = 0;
+        
+        remainingAmountSpan.innerText = `$${remaining}`;
+        savedAmountSpan.innerText = `Saved: $${savedSoFar} of $${target}`;
+        let percent = (savedSoFar / target) * 100;
+        if (percent > 100) percent = 100;
+        progressFill.style.width = `${percent}%`;
+
+        dayListDiv.innerHTML = '';
+        const goalReached = savedSoFar >= target;
+        
+        for (let i = 0; i < amounts.length; i++) {
+            const dayNum = i + 1;
+            let amount = amounts[i];
+            const paid = paidStatus[i];
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day-item';
+            
+            if (goalReached && !paid) {
+                dayDiv.innerHTML = `
+                    <div class="day-info">Day ${dayNum}</div>
+                    <div class="day-amount">$${amount}</div>
+                    <button class="pay-btn paid-btn" disabled>Goal achieved</button>
+                `;
+            } else if (paid) {
+                dayDiv.innerHTML = `
+                    <div class="day-info">Day ${dayNum}</div>
+                    <div class="day-amount">$${amount}</div>
+                    <button class="pay-btn paid-btn" disabled>Paid</button>
+                `;
+            } else {
+                dayDiv.innerHTML = `
+                    <div class="day-info">Day ${dayNum}</div>
+                    <div class="day-amount">$${amount}</div>
+                    <button class="pay-btn" data-index="${i}">Pay</button>
+                `;
+            }
+            dayListDiv.appendChild(dayDiv);
+        }
+
+        document.querySelectorAll('.pay-btn[data-index]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.getAttribute('data-index'));
+                if (paidStatus[idx]) return;
+                if (savedSoFar >= target) return;
+                
+                let amountToAdd = amounts[idx];
+                let remainingSpace = target - savedSoFar;
+                
+                if (amountToAdd > remainingSpace) {
+                    amountToAdd = remainingSpace;
+                }
+                
+                if (amountToAdd <= 0) return;
+                
+                paidStatus[idx] = true;
+                savedSoFar += amountToAdd;
+                saveToLocalStorage();
+                updateUI();
+                
+                if (savedSoFar >= target) {
+                    setTimeout(() => {
+                        alert("🎉 Congratulations! You reached your goal! 🎉");
+                    }, 50);
+                }
+            });
+        });
+    }
+
+    function saveToLocalStorage() {
+        const data = { target, days, amounts, paidStatus, savedSoFar };
+        localStorage.setItem('kozoplan_data', JSON.stringify(data));
+    }
+
+    function loadFromLocalStorage() {
+        const raw = localStorage.getItem('kozoplan_data');
+        if (!raw) return false;
+        try {
+            const data = JSON.parse(raw);
+            if (data.target && data.amounts && data.paidStatus && data.savedSoFar !== undefined) {
+                target = data.target;
+                days = data.days;
+                amounts = data.amounts;
+                paidStatus = data.paidStatus;
+                savedSoFar = data.savedSoFar;
+                return true;
+            }
+        } catch(e) {}
+        return false;
+    }
+
+    function startNewPlan(newTarget, newDays) {
+        target = newTarget;
+        days = newDays;
+        amounts = generateRandomAmounts(target, days);
+        paidStatus = new Array(days).fill(false);
+        savedSoFar = 0;
+        saveToLocalStorage();
+        updateUI();
+        
+        let sum = amounts.reduce((a,b) => a + b, 0);
+        if (sum !== target) {
+            let diff = target - sum;
+            amounts[amounts.length - 1] += diff;
+            saveToLocalStorage();
+            updateUI();
+        }
+    }
+
+    function resetToSetup() {
+        setupScreen.style.display = 'block';
+        trackerScreen.style.display = 'none';
+        localStorage.removeItem('kozoplan_data');
+        localStorage.removeItem('kozoplan_motivation_shown');
+    }
+
+    generateBtn.addEventListener('click', () => {
+        let newTarget = parseFloat(document.getElementById('goalAmount').value);
+        let newDays = parseInt(document.getElementById('daysCount').value, 10);
+        if (isNaN(newTarget) || newTarget <= 0 || isNaN(newDays) || newDays <= 0) {
+            alert("Please enter a valid goal and number of days");
+            return;
+        }
+        startNewPlan(newTarget, newDays);
+        setupScreen.style.display = 'none';
+        trackerScreen.style.display = 'block';
+    });
+
+    resetLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        resetToSetup();
+    });
+
+    function showMotivationScreen() {
+        const motivationShown = localStorage.getItem('kozoplan_motivation_shown');
+        if (motivationShown) return;
+
+        const modal = document.createElement('div');
+        modal.className = 'motivation-screen';
+        modal.innerHTML = `
+            <div class="motivation-card">
+                <h2>💪 Pay yourself first</h2>
+                <p>If you earn daily — as a courier, taxi driver, or delivery worker — you're the most financially vulnerable person in the economy.<br><br>
+                The only way out is to <strong>pay yourself first</strong>. Every day. Even $12. Even $16. Even a random amount you didn't expect.<br><br>
+                This app helps you do exactly that. One tap a day. Your future self will thank you.</p>
+                <button class="motivation-btn" id="closeMotivation">I'm ready →</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        document.getElementById('closeMotivation').addEventListener('click', () => {
+            modal.remove();
+            localStorage.setItem('kozoplan_motivation_shown', 'true');
+        });
+    }
+
+    if (loadFromLocalStorage()) {
+        if (amounts && amounts.length === days && paidStatus && paidStatus.length === days) {
+            setupScreen.style.display = 'none';
+            trackerScreen.style.display = 'block';
+            updateUI();
+            showMotivationScreen();
+        } else {
+            resetToSetup();
+            showMotivationScreen();
+        }
+    } else {
+        resetToSetup();
+        showMotivationScreen();
+    }
+</script>
+</body>
+</html>
